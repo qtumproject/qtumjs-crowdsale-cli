@@ -115,6 +115,20 @@ async function investedBy(address) {
   console.log("token balance:", tokenBalance)
 }
 
+/**
+ * Presale allocation
+ *
+ * @param address {string} investor address
+ */
+async function preallocate(receiverAddress, tokens, price) {
+  console.log("preallocate", receiverAddress, tokens, price)
+  const tx = await crowdsale.send("preallocate", [receiverAddress, tokens, price])
+  console.log("preallocate txid", tx.txid)
+  const receipt = await tx.confirm(1)
+  console.log("preallocate receipt:")
+  console.log(JSON.stringify(receipt, null, 2))
+}
+
 async function main() {
   const argv = process.argv.slice(2)
 
@@ -131,6 +145,9 @@ async function main() {
       break
     case "setup":
       await setupCrowdsale()
+      break
+    case "preallocate":
+      await preallocate(argv[1], parseInt(argv[2]), parseInt(argv[3]))
       break
     case "invest":
       await invest(argv[1], parseInt(argv[2]))
