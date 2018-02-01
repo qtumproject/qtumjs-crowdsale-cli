@@ -37,11 +37,13 @@ async function showinfo() {
   console.log("crowdsale state:", await crowdsale.returnAs(stateName, "getState"))
   console.log("crowdsale start date:", await crowdsale.returnDate("startsAt"))
   console.log("crowdsale end date:", await crowdsale.returnDate("endsAt"))
+
+  console.log("investor count:", await crowdsale.return("investorCount"))
   console.log("qtum raised:", await crowdsale.returnCurrency("qtum", "weiRaised"))
   console.log("tokens sold:", await crowdsale.return("tokensSold"))
 
   console.log(`
-The crowdsale state returned by callcontract may not reflect the actual state because
+The crowdsale state returned by callcontract does not reflect the actual state because
 block.timestamp is always 0 when calling a contract. This will be fixed in Issue #480.
 
 See https://github.com/qtumproject/qtum/issues/480
@@ -60,14 +62,16 @@ async function setupCrowdsale() {
     let receipt = await tx.confirm(1)
     console.log("mytoken.setReleaseAgent receipt", receipt)
   }
+  console.log("releaseAgent coinfigured")
 
   // set crowdsale's finalize agent
-  if (await crowdsale.return("finalizeAgent") === nullAddress) {
+  if (await crowdsale.return("finalizeAgent") !== finalizeAgent.address) {
     tx = await crowdsale.send("setFinalizeAgent", [finalizeAgent.address])
     console.log("confirming crowdsale.setFinalizeAgent:", tx.txid)
     receipt = await tx.confirm(1)
     console.log("crowdsale.setFinalizeAgent receipt", receipt)
   }
+  console.log("finalizeAgent coinfigured")
 
   // The mint agent of the token should be the crowdsale contract.
   // `true` means this address is allow to mint. `false` to disable a mint agent.
@@ -77,6 +81,38 @@ async function setupCrowdsale() {
     receipt = await tx.confirm(1)
     console.log("mytoken.setMintAgent receipt", receipt)
   }
+  console.log("mintAgents coinfigured")
+}
+
+/**
+ * Invest money in crowdsale
+ *
+ * @param address {string} receiver of tokens
+ * @param amount {number} amount to invest (in qtum)
+ */
+async function invest(address, amount) {
+  console.log("invest", address, amount)
+  const tx = await crowdsale.send("invest", [address], {
+    amount,
+    gasLimit: 300000,
+  })
+  console.log("invest txid", tx.txid)
+  const receipt = await tx.confirm(1)
+  console.log("invest receipt:")
+  console.log(JSON.stringify(receipt, null, 2))
+}
+
+/**
+ * Invest money in crowdsale
+ *
+ * @param address {string} investor address
+ */
+async function investedBy(address) {
+  const amount = await crowdsale.returnCurrency("qtum", "investedAmountOf", [address])
+  console.log("invested by:", address)
+  console.log("amount (qtum):", amount)
+  const tokenBalance = await mytoken.return("balanceOf", [address])
+  console.log("token balance:", tokenBalance)
 }
 
 async function main() {
@@ -92,6 +128,15 @@ async function main() {
   switch (cmd) {
     case "info":
       await showinfo()
+      break
+    case "setup":
+      await setupCrowdsale()
+      break
+    case "invest":
+      await invest(argv[1], parseInt(argv[2]))
+      break
+    case "investedBy":
+      await investedBy(argv[1])
       break
     default:
       console.log("unrecognized command", cmd)
