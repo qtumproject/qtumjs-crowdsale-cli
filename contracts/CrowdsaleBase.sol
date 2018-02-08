@@ -276,6 +276,19 @@ contract CrowdsaleBase is Haltable {
     EndsAtChanged(endsAt);
   }
 
+  event LogStateEvent(uint256 now, uint256 secondsToEnd, State state);
+
+  /**
+   * Use log to get the accurate state of the crowdsale.
+   *
+   * Can remove when #480 is released.
+   *
+   * https://github.com/qtumproject/qtum/issues/480
+   */
+  function logState() {
+    LogStateEvent(now, endsAt - now, getState());
+  }
+
   /**
    * Allow to (re)set pricing strategy.
    *
