@@ -13,12 +13,13 @@ const nullAddress = "0000000000000000000000000000000000000000" // i.e. 0x0
 /**
  * Return the current state of the crowdsale
  *
- * - Preparing: All contract initialization calls and variables have not been set yet
- * - Prefunding: We have not passed start time yet
- * - Funding: Active crowdsale
- * - Success: Minimum funding goal reached
- * - Failure: Minimum funding goal not reached before ending time
- * - Finalized: The finalized has been called and succesfully executed
+ * - Unknown (0)
+ * - Preparing (1): All contract initialization calls and variables have not been set yet
+ * - Prefunding (2): We have not passed start time yet
+ * - Funding (3): Active crowdsale
+ * - Success (4): Minimum funding goal reached
+ * - Failure (5): Minimum funding goal not reached before ending time
+ * - Finalized (6): The finalized has been called and succesfully executed
  * - Refunding: Refunds are loaded on the contract for reclaim
  *
  * @param state {number} the state of a crowdsale, as number
@@ -41,6 +42,9 @@ async function showinfo() {
   console.log("investor count:", await crowdsale.return("investorCount"))
   console.log("qtum raised:", await crowdsale.returnCurrency("qtum", "weiRaised"))
   console.log("tokens sold:", await crowdsale.return("tokensSold"))
+
+  console.log("minimum funding goal:", await crowdsale.returnCurrency("qtum", "minimumFundingGoal"))
+  console.log("minimum funding goal reached:", await crowdsale.return("isMinimumGoalReached"))
 
   console.log(`
 The crowdsale state returned by callcontract does not reflect the actual state because
@@ -129,6 +133,97 @@ async function preallocate(receiverAddress, tokens, price) {
   console.log(JSON.stringify(receipt, null, 2))
 }
 
+/**
+ * Finalize a crowdsale
+ */
+async function finalize() {
+  const finalized = await crowdsale.return("finalized")
+
+  if (finalized) {
+    throw new Error("crowdsale is already finalized")
+  }
+
+  const tx = await crowdsale.send("finalize")
+  const receipt = await tx.confirm(1)
+  console.log("finalize receipt:", receipt)
+}
+
+/**
+ * Set crowdsale's end date to 1 minute from.
+ */
+async function endCrowdsaleNow() {
+  const nowDate = new Date()
+  // The fudge factor 60s may need to be larger on the real network, where there may be a clock skew.
+  const now = Math.floor(nowDate / 1000) + 60
+  const tx = await crowdsale.send("setEndsAt", [now])
+  const receipt = await tx.confirm(1)
+  console.log("end now receipt:")
+  console.log(JSON.stringify(receipt, null, 2))
+}
+
+/**
+ * Finalize the Crowdsale
+ */
+async function finalizeCrowdsale() {
+  crowdsale.finalized()
+  const tx = await crowdsale.send("finalize")
+  const receipt = await tx.confirm(1)
+  console.log("receipt")
+  console.log(JSON.stringify(receipt, null, 2))
+}
+
+/**
+ * Load Refund
+ */
+async function loadRefund() {
+  const amountRaised = await crowdsale.returnCurrency("qtum", "weiRaised")
+
+  const loadedRefund = await crowdsale.returnCurrency("qtum", "loadedRefund")
+
+  const amountToLoad = amountRaised - loadedRefund
+
+  console.log("amount to load as refund", amountToLoad)
+
+  if (amountToLoad > 0) {
+    const tx = await crowdsale.send("loadRefund", [], {
+      amount: amountToLoad,
+    })
+    console.log("tx:", tx)
+    const receipt = await tx.confirm(1)
+    console.log("receipt", receipt)
+  }
+}
+
+// debug contract state
+async function logState() {
+  const tx = await crowdsale.send("logState")
+  const receipt = await tx.confirm(1)
+  console.log(JSON.stringify(receipt, null, 2))
+}
+
+/**
+ * Get the token balance of an address
+ *
+ * @param {string} address
+ */
+async function balanceOf(address) {
+  const balance = await mytoken.return("balanceOf", [address])
+
+  console.log("balance:", balance)
+}
+
+async function transfer(fromAddr, toAddr, amount) {
+  const tx = await mytoken.send("transfer", [toAddr, amount], {
+    senderAddress: fromAddr,
+  })
+
+  console.log("transfer tx:", tx.txid)
+  console.log(tx)
+
+  const receipt = await tx.confirm(1)
+  console.log("receipt", receipt)
+}
+
 async function main() {
   const argv = process.argv.slice(2)
 
@@ -154,6 +249,25 @@ async function main() {
       break
     case "investedBy":
       await investedBy(argv[1])
+      break
+    case "finalize":
+      await finalize()
+      break
+    case "endnow":
+      await endCrowdsaleNow()
+      break
+    case "loadRefund":
+      await loadRefund()
+      break
+    case "state":
+      await logState()
+      break
+    case "balanceOf":
+      await balanceOf(argv[1])
+      break
+    case "transfer":
+      // fromAddr, toAddr, amount
+      await transfer(argv[1], argv[2], argv[3])
       break
     default:
       console.log("unrecognized command", cmd)
