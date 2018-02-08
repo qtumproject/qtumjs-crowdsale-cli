@@ -194,6 +194,19 @@ async function loadRefund() {
   }
 }
 
+/**
+ * Refund to address
+ *
+ * @param {string} addr
+ */
+async function refund(addr) {
+  const tx = await crowdsale.send("refund", [], {
+    senderAddress: addr,
+  })
+  const receipt = await tx.confirm(1)
+  console.log("receipt", receipt)
+}
+
 // debug contract state
 async function logState() {
   const tx = await crowdsale.send("logState")
@@ -258,6 +271,9 @@ async function main() {
       break
     case "loadRefund":
       await loadRefund()
+      break
+    case "refund":
+      await refund(argv[1])
       break
     case "state":
       await logState()
