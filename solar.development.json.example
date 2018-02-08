@@ -1,50 +1,5 @@
 {
   "contracts": {
-    "BlockTime.sol": {
-      "source": "BlockTime.sol:BlockTime",
-      "abi": [
-        {
-          "name": "getBlockTime",
-          "type": "function",
-          "payable": false,
-          "inputs": [],
-          "outputs": [
-            {
-              "name": "",
-              "type": "uint256",
-              "indexed": false
-            }
-          ],
-          "constant": true,
-          "anonymous": false
-        },
-        {
-          "name": "BlockTimeEvent",
-          "type": "event",
-          "payable": false,
-          "inputs": [
-            {
-              "name": "time",
-              "type": "uint256",
-              "indexed": false
-            }
-          ],
-          "outputs": null,
-          "constant": false,
-          "anonymous": false
-        }
-      ],
-      "bin": "60606040523415600e57600080fd5b60cb8061001c6000396000f300606060405260043610603e5763ffffffff7c010000000000000000000000000000000000000000000000000000000060003504166387ceff0981146043575b600080fd5b3415604d57600080fd5b60536065565b60405190815260200160405180910390f35b60007f834b232e222fd478fbc14dc686a95e5120c477293b9aa05d55cc19491077f49a4260405190815260200160405180910390a15042905600a165627a7a723058200597ab27d338fa5ff1d1075d3eddb4f801eb68821fda9cafd9346465d42a86d00029",
-      "binhash": "4bf662b83d2ce2077a9b358088ea60a50c055774d8d5ff81e35a7b11370970b9",
-      "name": "BlockTime",
-      "deployName": "BlockTime.sol",
-      "address": "a07ae04b78b475bacf747f3a47391af418e1a770",
-      "txid": "620ffa9bae9125b1bc0407677b65625e534cb61ca03acdcdc66758a902836a74",
-      "createdAt": "2018-01-30T08:56:46.228502268Z",
-      "confirmed": true,
-      "sender": "qSSHqBByaAYAUhEzE5HUbYcnFE5XqyrVwh",
-      "senderHex": "6161c67147eb9b1363469625657cbc54b5df19f2"
-    },
     "Crowdsale": {
       "source": "contracts/MintedTokenCappedCrowdsale.sol:MintedTokenCappedCrowdsale",
       "abi": [
